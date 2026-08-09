@@ -1,0 +1,9 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pt
+*.safetensors
+.env
+.vscode/
+.idea/
