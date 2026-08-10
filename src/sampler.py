@@ -54,3 +54,73 @@ class TestTimeSampler:
         }
         
         return decoded_image, metrics
+    import torch
+from src.model import PretrainedT2IModel
+
+class ModularSampler:
+    """Configurable and modular sampling loop supporting CFG and Auto-Guidance."""
+
+    def __init__(self, model_wrapper: PretrainedT2IModel, weaker_model_wrapper: PretrainedT2IModel = None):
+        self.model = model_wrapper
+        self.weaker_model = weaker_model_wrapper  # Optional secondary model for Auto-Guidance
+
+    def _get_weaker_prediction(self, latents, t, encoder_hidden_states):
+        """Helper to get weaker model prediction for Auto-Guidance."""
+        if self.weaker_model is not None:
+            # Option A: Use an actual weaker checkpoint if available
+            return self.weaker_model.unet(latents, t, encoder_hidden_states=encoder_hidden_states).sample
+        else:
+            # Option B: Fallback / Placeholder (e.g., perturbed input or degraded prediction)
+            # This keeps the code ready without breaking if no weaker model is provided yet
+            perturbed_latents = latents * 0.95  # Simple placeholder degradation
+            return self.model.unet(perturbed_latents, t, encoder_hidden_states=encoder_hidden_states).sample
+
+    @torch.no_grad()
+    def sample(self, prompt: str, config: dict):
+        # Extract configuration flags
+        num_steps = config.get("num_inference_steps", 30)
+        cfg_scale = config.get("cfg_scale", 7.5)
+        auto_guidance_scale = config.get("auto_guidance_scale", 1.0)
+        
+        active_methods = config.get("methods", ["cfg"])  # e.g., ["cfg"], ["auto_guidance"], or ["cfg", "auto_guidance"]
+        
+        # 1. Prepare Text Embeddings
+        text_embeds = self.model.encode_prompt(
+            prompt=prompt, 
+            negative_prompt=config.get("negative_prompt", "")
+        )  # Returns concatenated [uncond_embeds, cond_embeds]
+        
+        uncond_embeds, cond_embeds = text_embeds.chunk(2)
+
+        # 2. Prepare Latents & Timesteps
+        generator = torch.Generator(device=self.model.device).manual_seed(config.get("seed", 42))
+        latents = torch.randn((1, 4, 64, 64), generator=generator, device=self.model.device)
+        
+        self.model.scheduler.set_timesteps(num_steps)
+        latents = latents * self.model.scheduler.init_noise_sigma
+
+        # 3. Modular Denoising Loop
+        for t in self.model.scheduler.timesteps:
+            latent_model_input = self.model.scheduler.scale_model_input(latents, t)
+
+            # --- Base Forward Pass (Conditional) ---
+            noise_cond = self.model.unet(latent_model_input, t, encoder_hidden_states=cond_embeds).sample
+            guided_noise = noise_cond.clone()
+
+            # --- Method 1: Classifier-Free Guidance (CFG) ---
+            if "cfg" in active_methods and cfg_scale > 1.0:
+                noise_uncond = self.model.unet(latent_model_input, t, encoder_hidden_states=uncond_embeds).sample
+                guided_noise = noise_uncond + cfg_scale * (noise_cond - noise_uncond)
+
+            # --- Method 2: Auto-Guidance ---
+            if "auto_guidance" in active_methods and auto_guidance_scale > 0.0:
+                noise_weaker = self._get_weaker_prediction(latent_model_input, t, cond_embeds)
+                # Combine auto-guidance delta
+                guided_noise = guided_noise + auto_guidance_scale * (noise_cond - noise_weaker)
+
+            # Step latent update (t -> t-1)
+            latents = self.model.scheduler.step(guided_noise, t, latents).prev_sample
+
+        # 4. Decode to Image
+        decoded_image = self.model.decode_latents(latents)
+        return decoded_image
