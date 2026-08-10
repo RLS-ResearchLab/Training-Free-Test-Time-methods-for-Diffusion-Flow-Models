@@ -1,6 +1,7 @@
 import torch
 from src.model import PretrainedT2IModel
 
+
 class TestTimeSampler:
     """Executes denoising loops with combined test-time techniques."""
 
@@ -54,8 +55,7 @@ class TestTimeSampler:
         }
         
         return decoded_image, metrics
-    import torch
-from src.model import PretrainedT2IModel
+
 
 class ModularSampler:
     """Configurable and modular sampling loop supporting CFG and Auto-Guidance."""

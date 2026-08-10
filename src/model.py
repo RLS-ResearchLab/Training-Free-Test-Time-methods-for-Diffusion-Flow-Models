@@ -1,6 +1,9 @@
 import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import UNet2DConditionModel, DDIMScheduler, AutoencoderKL
+from diffusers import StableDiffusion3Pipeline, SD3Transformer2DModel, AutoencoderKL
+from transformers import CLIPTextModelWithProjection, T5EncoderModel
+
 
 class PretrainedT2IModel:
     """Wraps a pre-trained Text-to-Image model for granular step-level manipulation."""
@@ -38,9 +41,7 @@ class PretrainedT2IModel:
         image = (image / 2 + 0.5).clamp(0, 1)
         image = image.cpu().permute(0, 2, 3, 1).numpy()
         return image
-import torch
-from diffusers import StableDiffusion3Pipeline, SD3Transformer2DModel, AutoencoderKL
-from transformers import CLIPTextModelWithProjection, T5EncoderModel
+
 
 class SD35ModelWrapper:
     """Modular wrapper for Stable Diffusion 3.5 providing a unified model interface."""
