@@ -1,55 +1,10 @@
 import torch
-from transformers import CLIPTextModel, CLIPTokenizer
-from diffusers import UNet2DConditionModel, DDIMScheduler, AutoencoderKL
-
-class PretrainedT2IModel:
-    """Wraps a pre-trained Text-to-Image model for granular step-level manipulation."""
-    
-    def __init__(self, model_id: str = "runwayml/stable-diffusion-v1-5", device: str = "cuda"):
-        self.device = torch.device(device if torch.cuda.is_available() else "cpu")
-        self.model_id = model_id
-        
-        # Component loading
-        self.tokenizer = CLIPTokenizer.from_pretrained(model_id, subfolder="tokenizer")
-        self.text_encoder = CLIPTextModel.from_pretrained(model_id, subfolder="text_encoder").to(self.device)
-        self.unet = UNet2DConditionModel.from_pretrained(model_id, subfolder="unet").to(self.device)
-        self.vae = AutoencoderKL.from_pretrained(model_id, subfolder="vae").to(self.device)
-        self.scheduler = DDIMScheduler.from_pretrained(model_id, subfolder="scheduler")
-
-    @torch.no_grad()
-    def encode_prompt(self, prompt: str, negative_prompt: str = ""):
-        """Helper to get conditioned and unconditioned text embeddings."""
-        cond_tokens = self.tokenizer(
-            prompt, padding="max_length", max_length=self.tokenizer.model_max_length, return_tensors="pt"
-        ).input_ids.to(self.device)
-        uncond_tokens = self.tokenizer(
-            negative_prompt, padding="max_length", max_length=self.tokenizer.model_max_length, return_tensors="pt"
-        ).input_ids.to(self.device)
-
-        cond_embeds = self.text_encoder(cond_tokens)[0]
-        uncond_embeds = self.text_encoder(uncond_tokens)[0]
-        return torch.cat([uncond_embeds, cond_embeds])
-
-    @torch.no_grad()
-    def decode_latents(self, latents: torch.Tensor):
-        """Decodes latent representations back into PIL Images."""
-        latents = 1 / self.vae.config.scaling_factor * latents
-        image = self.vae.decode(latents).sample
-        image = (image / 2 + 0.5).clamp(0, 1)
-        image = image.cpu().permute(0, 2, 3, 1).numpy()
-        return image
-
-import torch
 from torch import nn
 from diffusers import StableDiffusion3Pipeline
-
-# Helper function as seen in Dhia's repository
-def freeze(module: nn.Module):
-    for param in module.parameters():
-        param.requires_grad = False
+from .utils import freeze
 
 class SD35Wrapper(nn.Module):
-    """SD 3.5 Model Wrapper following Dhia's architectural pattern."""
+    """Wrapper SD 3.5 aligné sur le style et l'interface de FluxWrapper."""
 
     def __init__(
         self, 
@@ -68,17 +23,16 @@ class SD35Wrapper(nn.Module):
         self._load_model(model_id)
 
     def _load_model(self, model_id: str):
-        print(f"Loading SD 3.5 pipeline from {model_id}...")
         pipe = StableDiffusion3Pipeline.from_pretrained(model_id, torch_dtype=self.dtype)
-
+        
+        # 1. Extraction explicite des composants
         self.vae = pipe.vae.cuda()
         self.transformer = pipe.transformer.cuda()
         
-        # Text encoders & tokenizers
         self.text_encoder = pipe.text_encoder
         self.text_encoder_2 = pipe.text_encoder_2
         self.text_encoder_3 = pipe.text_encoder_3
-        
+
         self.tokenizer = pipe.tokenizer
         self.tokenizer_2 = pipe.tokenizer_2
         self.tokenizer_3 = pipe.tokenizer_3
@@ -86,18 +40,21 @@ class SD35Wrapper(nn.Module):
         self.scheduler = pipe.scheduler
         self._encode_prompt_fn = pipe.encode_prompt
 
-        # Freeze all modules to save memory
-        for module in [self.vae, self.transformer, self.text_encoder, self.text_encoder_2, self.text_encoder_3]:
+        # 2. Gel des modules (Freeze)
+        for module in [self.vae, self.transformer, self.text_encoder, self.text_encoder_2]:
             module.eval()
             freeze(module)
+
+        if self.text_encoder_3 is not None:
+            self.text_encoder_3.eval()
+            freeze(self.text_encoder_3)
 
         del pipe
         torch.cuda.empty_cache()
 
     @torch.no_grad()
     def encode_prompts(self, prompts: list[str]):
-        """Encodes prompts into dual prompt embeddings and manages GPU memory dynamically."""
-        # Ensure encoders are on GPU for execution
+        """Encode les prompts en passant temporairement les encodeurs sur GPU puis CPU."""
         self.text_encoder.cuda()
         self.text_encoder_2.cuda()
         if self.text_encoder_3:
@@ -114,7 +71,7 @@ class SD35Wrapper(nn.Module):
             do_classifier_free_guidance=True,
         )
 
-        # Move encoders back to CPU to free VRAM for Transformer & VAE execution
+        # Offload vers le CPU pour libérer la VRAM pour le DiT
         self.text_encoder.cpu()
         self.text_encoder_2.cpu()
         if self.text_encoder_3:
@@ -128,19 +85,15 @@ class SD35Wrapper(nn.Module):
         }
 
     def init_latents(self, batch_size: int = 1, seed: int = 42):
-        """Initializes Gaussian noise latents."""
+        """Initialise le bruit gaussien."""
         h = w = self.image_size // 8
         torch.manual_seed(seed)
-        z = torch.randn(batch_size, 16, h, w, device="cuda", dtype=self.dtype)
-        return z
+        return torch.randn(batch_size, 16, h, w, device="cuda", dtype=self.dtype)
 
     @torch.no_grad()
     def decode(self, latents: torch.Tensor):
-        """Decodes latents to RGB image tensor."""
-        latents_scaled = (latents / self.vae.config.scaling_factor) + self.vae.config.shift_factor
-        
+        """Décode les latents en image RGB."""
+        latents_sc = (latents / self.vae.config.scaling_factor) + self.vae.config.shift_factor
         with torch.amp.autocast(device_type="cuda", dtype=self.dtype):
-            images = self.vae.decode(latents_scaled, return_dict=False)[0]
-
-        images = (images.float().clamp(-1.0, 1.0) + 1.0) / 2.0
-        return images
+            images = self.vae.decode(latents_sc, return_dict=False)[0]
+        return images.float()
