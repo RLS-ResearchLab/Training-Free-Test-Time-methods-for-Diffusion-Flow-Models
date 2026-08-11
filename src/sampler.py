@@ -1,43 +1,47 @@
 import os
 import torch
-from src.utils import save_image_tensor
+from PIL import Image
 
 class ModularSampler:
-    def __init__(self, model, output_dir="samples"):
-        self.model = model
-        self.output_dir = output_dir
+    def __init__(self, model_wrapper):
+        self.model = model_wrapper
 
     @torch.no_grad()
-    def sample(self, prompt: str, config: dict, exp_name: str = "run_01"):
-        save_folder = os.path.join(self.output_dir, exp_name)
+    def sample(self, prompt: str, num_steps: int = 28, cfg_scale: float = 4.5, save_path: str = "samples/baseline.png"):
+        # 1. Encodings & Latents
+        prompt_embeds, neg_embeds, pooled, neg_pooled = self.model.encode_prompts(prompt)
         
-        # 1. Encodage & Latents
-        embeds = self.model.encode_prompts([prompt])
-        latents = self.model.init_latents(batch_size=1, seed=config.get("seed", 42))
+        
+        torch.manual_seed(42)
+        latents = torch.randn(1, 16, 64, 64, device="cuda", dtype=self.model.dtype)
 
-        self.model.scheduler.set_timesteps(config.get("num_inference_steps", 28))
+        
+        self.model.scheduler.set_timesteps(num_steps)
         timesteps = self.model.scheduler.timesteps
 
-        # 2. Loop de Dénoyautage
-        for idx, t in enumerate(timesteps):
-            # Prédiction du Transformer / DiT
+       
+        for t in timesteps:
+            # Predict noise / velocity
             noise_pred = self.model.transformer(
                 hidden_states=latents,
                 timestep=t / 1000.0,
-                encoder_hidden_states=embeds["cond"]["prompt_embeds"],
-                pooled_projections=embeds["cond"]["pooled_prompt_embeds"],
+                encoder_hidden_states=prompt_embeds,
+                pooled_projections=pooled,
                 return_dict=False
             )[0]
 
+            
             latents = self.model.scheduler.step(noise_pred, t, latents, return_dict=False)[0]
 
-            # Sauvegarde des étapes/points intermédiaires (tous les 5 steps)
-            if config.get("save_points", False) and (idx % 5 == 0 or idx == len(timesteps) - 1):
-                interm_img = self.model.decode(latents)
-                save_image_tensor(interm_img, f"{save_folder}/points/step_{idx:02d}_t{int(t)}.png")
+        # 4. Decode & Save Image
+        image_tensor = self.model.decode(latents)
+        self._save_tensor_as_image(image_tensor, save_path)
+        return image_tensor
 
-        # 3. Sauvegarde de l'image finale
-        final_img = self.model.decode(latents)
-        save_image_tensor(final_img, f"{save_folder}/final_output.png")
-
-        return final_img
+    def _save_tensor_as_image(self, tensor: torch.Tensor, save_path: str):
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        tensor = (tensor.squeeze(0).clamp(-1, 1) + 1) / 2.0
+        tensor = (tensor.cpu().permute(1, 2, 0).numpy() * 255).astype("uint8")
+        img = Image.fromarray(tensor)
+        img.save(save_path)
+        print(f"Saved test image to: {save_path}")
