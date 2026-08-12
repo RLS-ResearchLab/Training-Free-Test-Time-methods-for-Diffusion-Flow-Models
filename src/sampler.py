@@ -12,7 +12,7 @@ class ModularSampler:
         perturbed_latents = latents * 0.95  # Placeholder perturbation
         return self.model.transformer(
             hidden_states=perturbed_latents,
-            timestep=t / 1000.0,
+            timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
             encoder_hidden_states=cond_embeds,
             pooled_projections=pooled,
             return_dict=False
@@ -33,14 +33,17 @@ class ModularSampler:
 
         # 2. Init Latents & Scheduler
         latents = self.model.init_latents(batch_size=1, seed=config.get("seed", 42))
-        self.model.scheduler.set_timesteps(config.get("num_inference_steps", 28))
+        self.model.scheduler.set_timesteps(
+        config.get("num_inference_steps", 28),
+        device="cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         # 3. Modular Denoising Loop
         for t in self.model.scheduler.timesteps:
             # Base Forward Pass (Conditional)
             noise_cond = self.model.transformer(
                 hidden_states=latents,
-                timestep=t / 1000.0,
+                timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
                 encoder_hidden_states=cond_embeds,
                 pooled_projections=cond_pooled,
                 return_dict=False
@@ -52,7 +55,7 @@ class ModularSampler:
             if "cfg" in active_methods and cfg_scale > 1.0:
                 noise_uncond = self.model.transformer(
                     hidden_states=latents,
-                    timestep=t / 1000.0,
+                    timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
                     encoder_hidden_states=uncond_embeds,
                     pooled_projections=uncond_pooled,
                     return_dict=False
@@ -70,7 +73,7 @@ class ModularSampler:
         # 4. Decode & Save Result
         image = self.model.decode(latents)
         self._save_tensor_as_image(image, os.path.join(save_folder, "result.png"))
-        return image
+        return image, {}
 
     def _save_tensor_as_image(self, tensor: torch.Tensor, save_path: str):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)

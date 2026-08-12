@@ -2,8 +2,8 @@ import glob
 import yaml
 import matplotlib.pyplot as plt
 
-from src.model import PretrainedT2IModel
-from src.sampler import TestTimeSampler
+from src.model import SD35Wrapper
+from src.sampler import ModularSampler
 
 def run_all_experiments():
     # 1. Discover all configuration files automatically
@@ -11,13 +11,15 @@ def run_all_experiments():
     print(f"Found {len(config_paths)} experiment config(s) to run.")
 
     # 2. Load model into memory ONCE
-    model_wrapper = PretrainedT2IModel(model_id="runwayml/stable-diffusion-v1-5")
-    sampler = TestTimeSampler(model_wrapper)
+    model_wrapper = SD35Wrapper(model_id="stabilityai/stable-diffusion-3.5-medium")
+    sampler = ModularSampler(model_wrapper)
 
     # Prepare matplotlib figure for side-by-side comparison
     fig, axes = plt.subplots(1, len(config_paths), figsize=(6 * len(config_paths), 6))
     if len(config_paths) == 1:
-        axes = [axes]  # Ensure indexing works if there's only 1 config
+        img_display = image[0].detach().cpu().permute(1, 2, 0).numpy()
+        img_display = (img_display - img_display.min()) / (img_display.max() - img_display.min())
+        axes[idx].imshow(img_display)  # Ensure indexing works if there's only 1 config
 
     # 3. Loop over each experiment
     for idx, path in enumerate(config_paths):
@@ -31,9 +33,11 @@ def run_all_experiments():
         image, metrics = sampler.sample(prompt=config["prompt"], config=config)
 
         # 4. Display result in comparison plot
-        axes[idx].imshow(image[0])
+        img_display = image[0].detach().cpu().permute(1, 2, 0).numpy()
+        img_display = (img_display - img_display.min()) / (img_display.max() - img_display.min())
+        axes[idx].imshow(img_display)
         axes[idx].set_title(
-            f"{config['experiment_name']}\nForward Passes: {metrics['total_forward_passes']}",
+            f"{config['experiment_name']}\nForward Passes: {metrics.get('total_forward_passes', 'N/A')}",
             fontsize=12
         )
         axes[idx].axis("off")
