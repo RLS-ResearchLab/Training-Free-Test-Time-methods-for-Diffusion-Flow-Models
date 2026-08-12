@@ -12,7 +12,7 @@ class ModularSampler:
         perturbed_latents = latents * 0.95  # Placeholder perturbation
         return self.model.transformer(
             hidden_states=perturbed_latents,
-            timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
+            timestep=t.unsqueeze(0) if t.dim() == 0 else t,
             encoder_hidden_states=cond_embeds,
             pooled_projections=pooled,
             return_dict=False
@@ -43,7 +43,7 @@ class ModularSampler:
             # Base Forward Pass (Conditional)
             noise_cond = self.model.transformer(
                 hidden_states=latents,
-                timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
+                timestep=t.unsqueeze(0) if t.dim() == 0 else t,
                 encoder_hidden_states=cond_embeds,
                 pooled_projections=cond_pooled,
                 return_dict=False
@@ -55,7 +55,7 @@ class ModularSampler:
             if "cfg" in active_methods and cfg_scale > 1.0:
                 noise_uncond = self.model.transformer(
                     hidden_states=latents,
-                    timestep=(t / 1000.0).unsqueeze(0) if t.dim() == 0 else t / 1000.0,
+                    timestep=t.unsqueeze(0) if t.dim() == 0 else t,
                     encoder_hidden_states=uncond_embeds,
                     pooled_projections=uncond_pooled,
                     return_dict=False
