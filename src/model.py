@@ -16,9 +16,10 @@ class SD35Wrapper(nn.Module):
         print(f"Loading pre-trained pipeline: {model_id}...")
         
         self.pipe = StableDiffusion3Pipeline.from_pretrained(
-        model_id,
-        torch_dtype=self.dtype
-    ).to("cuda" if torch.cuda.is_available() else "cpu")
+            model_id,
+            torch_dtype=self.dtype
+        )
+        self.pipe.enable_model_cpu_offload()
 
         
         self.transformer = self.pipe.transformer

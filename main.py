@@ -1,6 +1,7 @@
 import glob
 import yaml
 import matplotlib.pyplot as plt
+import torch
 
 from src.model import SD35Wrapper
 from src.sampler import ModularSampler
