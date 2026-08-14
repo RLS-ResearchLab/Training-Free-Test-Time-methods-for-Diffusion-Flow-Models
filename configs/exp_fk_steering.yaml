@@ -1,0 +1,12 @@
+experiment_name: "FK_Steering"
+model_id: "stabilityai/stable-diffusion-3.5-medium"
+prompt: "A high-tech cybernetic garden, cinematic lighting, 8k"
+negative_prompt: "blurry, low quality, distorted"
+seed: 42
+num_inference_steps: 30
+cfg_scale: 7.5
+num_particles: 2
+resample_interval: 5
+fk_temperature: 1.0
+methods:
+  - "fk_steering"
