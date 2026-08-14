@@ -39,6 +39,7 @@ class ModularSampler:
         )
 
         # 3. Modular Denoising Loop
+        forward_pass_count = 0
         for t in self.model.scheduler.timesteps:
             # Base Forward Pass (Conditional)
             noise_cond = self.model.transformer(
@@ -48,6 +49,7 @@ class ModularSampler:
                 pooled_projections=cond_pooled,
                 return_dict=False
             )[0]
+            forward_pass_count += 1
 
             guided_noise = noise_cond.clone()
 
@@ -60,11 +62,13 @@ class ModularSampler:
                     pooled_projections=uncond_pooled,
                     return_dict=False
                 )[0]
+                forward_pass_count += 1
                 guided_noise = noise_uncond + cfg_scale * (noise_cond - noise_uncond)
 
             # --- Method B: Auto-Guidance ---
             if "auto_guidance" in active_methods and ag_scale > 0.0:
                 noise_weaker = self._get_weaker_prediction(latents, t, cond_embeds, cond_pooled)
+                forward_pass_count += 1
                 guided_noise = guided_noise + ag_scale * (noise_cond - noise_weaker)
 
             # Update latent step (t -> t-1)
@@ -73,7 +77,8 @@ class ModularSampler:
         # 4. Decode & Save Result
         image = self.model.decode(latents)
         self._save_tensor_as_image(image, os.path.join(save_folder, "result.png"))
-        return image, {}
+        metrics = {"total_forward_passes": forward_pass_count}
+        return image, metrics
 
     def _save_tensor_as_image(self, tensor: torch.Tensor, save_path: str):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)

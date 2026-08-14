@@ -30,7 +30,7 @@ def run_all_experiments():
         print(f"\n[Running] {config['experiment_name']} | Methods: {config['methods']}")
 
         # Run custom sampling loop
-        image, metrics = sampler.sample(prompt=config["prompt"], config=config)
+        image, metrics = sampler.sample(prompt=config["prompt"], config=config, exp_name=config["experiment_name"])
 
         # 4. Display result in comparison plot
         img_display = image[0].detach().cpu().permute(1, 2, 0).numpy()
