@@ -1,0 +1,24 @@
+experiment_name: "CFG_plus_SAG"
+model_id: "runwayml/stable-diffusion-v1-5"
+prompt: "A high-tech cybernetic garden, cinematic lighting, 8k"
+negative_prompt: "blurry, low quality, distorted"
+seed: 42
+num_inference_steps: 30
+cfg_scale: 7.5
+sag_scale: 0.75
+methods:
+  - "cfg"
+  - "sag"
+experiment_name: "CFG_plus_AutoGuidance"
+model_id: "runwayml/stable-diffusion-v1-5"
+prompt: "A detailed cinematic portrait of an astronaut on Mars"
+negative_prompt: "blurry, low quality"
+seed: 42
+num_inference_steps: 30
+
+cfg_scale: 7.5
+auto_guidance_scale: 1.5
+
+methods:
+  - "cfg"
+  - "auto_guidance"
