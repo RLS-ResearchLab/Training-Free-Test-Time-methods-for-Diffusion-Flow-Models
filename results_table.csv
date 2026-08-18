@@ -1,0 +1,9 @@
+experiment,method,variant,state,forward_passes,time_sec,peak_memory_mb,clip_score,lpips_vs_without
+AutoGuidance_LatentScale,cfg,,without,60,35.647,11011.2,0.2907,
+AutoGuidance_LatentScale,cfg,,with,90,29.2,11191.3,0.2949,0.6781
+AutoGuidance_LatentScale,auto_guidance,latent_scale,without,60,23.03,11213.6,0.294,
+AutoGuidance_LatentScale,auto_guidance,latent_scale,with,90,27.136,11226.5,0.2949,0.4145
+Baseline_CFG,cfg,,without,30,16.121,11238.5,0.3032,
+Baseline_CFG,cfg,,with,60,21.672,11251.3,0.294,0.7035
+FK_Steering,fk_steering,,without,60,21.618,11264.2,0.294,
+FK_Steering,fk_steering,,with,120,46.132,11277.1,0.3002,0.6773
