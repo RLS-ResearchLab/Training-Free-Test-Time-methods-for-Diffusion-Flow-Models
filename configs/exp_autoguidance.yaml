@@ -1,4 +1,4 @@
-experiment_name: "CFG_plus_AutoGuidance"
+experiment_name: "AutoGuidance_LatentScale"
 model_id: "stabilityai/stable-diffusion-3.5-medium"
 prompt: "A high-tech cybernetic garden, cinematic lighting, 8k"
 negative_prompt: "blurry, low quality, distorted"
@@ -6,6 +6,8 @@ seed: 42
 num_inference_steps: 30
 cfg_scale: 7.5
 auto_guidance_scale: 3.5
+auto_guidance_variant: "latent_scale"
+auto_guidance_latent_scale: 0.95
 methods:
   - "cfg"
   - "auto_guidance"
