@@ -4,3 +4,7 @@ transformers
 diffusers
 accelerate
 huggingface_hub
+lpips
+open_clip_torch
+PyYAML
+tabulate
