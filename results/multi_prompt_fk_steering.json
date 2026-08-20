@@ -1,0 +1,224 @@
+[
+  {
+    "prompt_idx": 0,
+    "prompt": "A cluttered Victorian-era study at dusk: a brass telescope pointed out a rain-streaked window, stacks of leather-bound books on the floor, a globe tilted on its axis, warm candlelight, oil painting style, extremely detailed",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.2926,
+        "forward_passes": 30,
+        "time_sec": 36.196,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.3103,
+        "forward_passes": 30,
+        "time_sec": 17.672,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.3226,
+        "forward_passes": 30,
+        "time_sec": 15.804,
+        "is_best_for_prompt": true
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.3069,
+        "forward_passes": 30,
+        "time_sec": 15.633,
+        "is_best_for_prompt": false
+      }
+    ],
+    "mean_clip_score": 0.3081,
+    "best_clip_score": 0.3226
+  },
+  {
+    "prompt_idx": 1,
+    "prompt": "An overhead shot of a bustling night market street in Southeast Asia: dozens of red paper lanterns strung overhead, steam rising from food stalls, a wet reflective road surface, crowds of people with umbrellas, neon signage in the background, cinematic color grading",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.3118,
+        "forward_passes": 30,
+        "time_sec": 15.647,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.3193,
+        "forward_passes": 30,
+        "time_sec": 15.597,
+        "is_best_for_prompt": true
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.2628,
+        "forward_passes": 30,
+        "time_sec": 15.716,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.2781,
+        "forward_passes": 30,
+        "time_sec": 15.606,
+        "is_best_for_prompt": false
+      }
+    ],
+    "mean_clip_score": 0.293,
+    "best_clip_score": 0.3193
+  },
+  {
+    "prompt_idx": 2,
+    "prompt": "A cutaway technical illustration of a deep-sea research submarine, showing the pilot cabin, ballast tanks, robotic manipulator arms, and pressure hull in cross-section, labeled diagram style, blue and orange color scheme, engineering blueprint aesthetic",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.2888,
+        "forward_passes": 30,
+        "time_sec": 15.642,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.2665,
+        "forward_passes": 30,
+        "time_sec": 15.614,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.3081,
+        "forward_passes": 30,
+        "time_sec": 15.613,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.3251,
+        "forward_passes": 30,
+        "time_sec": 15.541,
+        "is_best_for_prompt": true
+      }
+    ],
+    "mean_clip_score": 0.2971,
+    "best_clip_score": 0.3251
+  },
+  {
+    "prompt_idx": 3,
+    "prompt": "A close-up macro photograph of a dew-covered spiderweb strung between two dry wheat stalks at golden hour, extremely shallow depth of field, individual water droplets in sharp focus, soft bokeh background",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.3366,
+        "forward_passes": 30,
+        "time_sec": 15.726,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.3121,
+        "forward_passes": 30,
+        "time_sec": 15.581,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.3025,
+        "forward_passes": 30,
+        "time_sec": 15.768,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.338,
+        "forward_passes": 30,
+        "time_sec": 15.631,
+        "is_best_for_prompt": true
+      }
+    ],
+    "mean_clip_score": 0.3223,
+    "best_clip_score": 0.338
+  },
+  {
+    "prompt_idx": 4,
+    "prompt": "A fantasy marketplace built into the trunk of an enormous ancient tree: spiral wooden staircases, glowing lanterns made of fireflies in jars, merchant stalls selling potions and scrolls, small winged creatures flying between branches, painterly concept-art style",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.3007,
+        "forward_passes": 30,
+        "time_sec": 15.839,
+        "is_best_for_prompt": true
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.2904,
+        "forward_passes": 30,
+        "time_sec": 15.879,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.2947,
+        "forward_passes": 30,
+        "time_sec": 15.83,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.2886,
+        "forward_passes": 30,
+        "time_sec": 15.516,
+        "is_best_for_prompt": false
+      }
+    ],
+    "mean_clip_score": 0.2936,
+    "best_clip_score": 0.3007
+  },
+  {
+    "prompt_idx": 5,
+    "prompt": "A minimalist product shot of a matte black ceramic coffee mug on a polished concrete surface, single soft studio light from the upper left, subtle shadow, shallow depth of field, commercial photography style",
+    "sampler": "fk_steering",
+    "samples": [
+      {
+        "sample_idx": 0,
+        "clip_score": 0.3558,
+        "forward_passes": 30,
+        "time_sec": 15.826,
+        "is_best_for_prompt": true
+      },
+      {
+        "sample_idx": 1,
+        "clip_score": 0.3421,
+        "forward_passes": 30,
+        "time_sec": 15.665,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 2,
+        "clip_score": 0.3469,
+        "forward_passes": 30,
+        "time_sec": 15.801,
+        "is_best_for_prompt": false
+      },
+      {
+        "sample_idx": 3,
+        "clip_score": 0.3272,
+        "forward_passes": 30,
+        "time_sec": 15.592,
+        "is_best_for_prompt": false
+      }
+    ],
+    "mean_clip_score": 0.343,
+    "best_clip_score": 0.3558
+  }
+]

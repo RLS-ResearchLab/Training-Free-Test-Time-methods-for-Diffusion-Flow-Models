@@ -1,10 +1,13 @@
+source/
+samples/
+*.png
+
+# Heavy binaries and dynamic outputs
 venv/
 .venv/
-__pycache__/
-*.pyc
+samples/
+data/
+*.pth
 *.pt
 *.safetensors
-.env
-.vscode/
-.idea/
-venv/
+*.bin
