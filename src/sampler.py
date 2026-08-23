@@ -132,6 +132,7 @@ class ModularSampler:
         exp_name: str = "exp_run",
         methods_override: list = None,
         save_name: str = "result.png",
+        save_to_disk: bool = True,
     ):
         """
         methods_override: if provided, replaces config["methods"] for this call only
@@ -140,6 +141,11 @@ class ModularSampler:
             stripped out — to produce a clean "with X" / "without X" pair.
         save_name: filename written inside samples/<exp_name>/, so the "with" and
             "without" runs of the same experiment don't overwrite one another.
+        save_to_disk: set False for large-N sweeps (e.g. scripts/eval_large_scale.py
+            generating 10k-50k samples per technique) where writing every generated
+            image to samples/ would flood disk for no benefit — the caller only needs
+            the returned tensor. Defaults to True so every other caller (main.py,
+            run_multi_prompt.py, eval_fid_clip.py) keeps its existing behavior.
         """
         save_folder = os.path.join(self.output_dir, exp_name)
         active_methods = methods_override if methods_override is not None else config.get("methods", ["cfg"])
@@ -202,7 +208,8 @@ class ModularSampler:
             # 4. Decode
             image = self.model.decode(latents)
 
-        self._save_tensor_as_image(image, os.path.join(save_folder, save_name))
+        if save_to_disk:
+            self._save_tensor_as_image(image, os.path.join(save_folder, save_name))
         metrics = {
             "total_forward_passes": forward_pass_count,
             "active_methods": list(active_methods),
