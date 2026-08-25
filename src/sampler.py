@@ -127,7 +127,7 @@ class ModularSampler:
     @torch.no_grad()
     def sample(
         self,
-        prompt: str,
+        prompt,
         config: dict,
         exp_name: str = "exp_run",
         methods_override: list = None,
@@ -135,6 +135,11 @@ class ModularSampler:
         save_to_disk: bool = True,
     ):
         """
+        prompt: a single string (original behavior, batch_size=1) OR a list of
+            strings (batched: all prompts denoised together in one forward pass
+            per step). When a list is passed, the returned `image` tensor has
+            shape [len(prompt), C, H, W] and save_to_disk is ignored (batched
+            calls are for large-scale sweeps where individual PNGs aren't written).
         methods_override: if provided, replaces config["methods"] for this call only
             (the config dict itself is never mutated). This is what lets main.py run
             the exact same config twice — once with a method included, once with it
@@ -153,53 +158,72 @@ class ModularSampler:
         cfg_scale = config.get("cfg_scale", 4.5)
         ag_scale = config.get("auto_guidance_scale", 1.0)
 
+        prompts = prompt if isinstance(prompt, list) else [prompt]
+        batch_size = len(prompts)
+
+        use_amp = config.get("use_amp", False)
+        amp_dtype = getattr(self.model, "dtype", torch.bfloat16)
+        device_type = "cuda" if torch.cuda.is_available() else "cpu"
+
         with ComputeTracker() as tracker:
-            # 1. Encode prompt (conditioned & unconditioned)
-            embeds = self.model.encode_prompts(prompt)
+            # 1. Encode prompts (conditioned & unconditioned) — encode_prompts
+            #    already accepts a list and returns batch-sized embeddings, so
+            #    no manual .repeat() is needed for the batched case.
+            embeds = self.model.encode_prompts(prompts)
             cond_embeds, cond_pooled = embeds["cond"]["prompt_embeds"], embeds["cond"]["pooled_prompt_embeds"]
             uncond_embeds, uncond_pooled = embeds["uncond"]["prompt_embeds"], embeds["uncond"]["pooled_prompt_embeds"]
 
             # 2. Init Latents & Scheduler
-            latents = self.model.init_latents(batch_size=1, seed=config.get("seed", 42))
+            latents = self.model.init_latents(
+                batch_size=batch_size,
+                height=config.get("height", 1024),
+                width=config.get("width", 1024),
+                seed=config.get("seed", 42),
+            )
             self.model.scheduler.set_timesteps(
                 config.get("num_inference_steps", 28),
-                device="cuda" if torch.cuda.is_available() else "cpu",
+                device=device_type,
             )
             total_steps = len(self.model.scheduler.timesteps)
 
             # 3. Modular Denoising Loop
             forward_pass_count = 0
             for step_idx, t in enumerate(self.model.scheduler.timesteps):
-                # Base Forward Pass (Conditional)
-                noise_cond = self.model.transformer(
-                    hidden_states=latents,
-                    timestep=t.unsqueeze(0) if t.dim() == 0 else t,
-                    encoder_hidden_states=cond_embeds,
-                    pooled_projections=cond_pooled,
-                    return_dict=False,
-                )[0]
-                forward_pass_count += 1
+                t_batch = t.repeat(batch_size) if t.dim() == 0 else t
+
+                with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                    # Base Forward Pass (Conditional)
+                    noise_cond = self.model.transformer(
+                        hidden_states=latents,
+                        timestep=t_batch,
+                        encoder_hidden_states=cond_embeds,
+                        pooled_projections=cond_pooled,
+                        return_dict=False,
+                    )[0]
+                forward_pass_count += batch_size
 
                 guided_noise = noise_cond.clone()
 
                 # --- Method A: Classifier-Free Guidance (CFG) ---
                 if "cfg" in active_methods and cfg_scale > 1.0:
-                    noise_uncond = self.model.transformer(
-                        hidden_states=latents,
-                        timestep=t.unsqueeze(0) if t.dim() == 0 else t,
-                        encoder_hidden_states=uncond_embeds,
-                        pooled_projections=uncond_pooled,
-                        return_dict=False,
-                    )[0]
-                    forward_pass_count += 1
+                    with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                        noise_uncond = self.model.transformer(
+                            hidden_states=latents,
+                            timestep=t_batch,
+                            encoder_hidden_states=uncond_embeds,
+                            pooled_projections=uncond_pooled,
+                            return_dict=False,
+                        )[0]
+                    forward_pass_count += batch_size
                     guided_noise = noise_uncond + cfg_scale * (noise_cond - noise_uncond)
 
                 # --- Method B: Auto-Guidance (variant-dispatched weak prediction) ---
                 if "auto_guidance" in active_methods and ag_scale > 0.0:
-                    noise_weaker = self._get_weaker_prediction(
-                        latents, t, cond_embeds, cond_pooled, config, step_idx, total_steps
-                    )
-                    forward_pass_count += 1
+                    with torch.autocast(device_type=device_type, dtype=amp_dtype, enabled=use_amp):
+                        noise_weaker = self._get_weaker_prediction(
+                            latents, t_batch, cond_embeds, cond_pooled, config, step_idx, total_steps
+                        )
+                    forward_pass_count += batch_size
                     guided_noise = guided_noise + ag_scale * (noise_cond - noise_weaker)
 
                 # Update latent step (t -> t-1)
@@ -208,8 +232,11 @@ class ModularSampler:
             # 4. Decode
             image = self.model.decode(latents)
 
-        if save_to_disk:
+        if save_to_disk and batch_size == 1:
             self._save_tensor_as_image(image, os.path.join(save_folder, save_name))
+        elif save_to_disk and batch_size > 1:
+            print(f"[ModularSampler] save_to_disk=True ignored for batched call (batch_size={batch_size}); "
+                  f"save individual images from the returned tensor yourself if needed.")
         metrics = {
             "total_forward_passes": forward_pass_count,
             "active_methods": list(active_methods),

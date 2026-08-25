@@ -31,7 +31,7 @@ class BestOfNSampler:
         self.n = n
         self.reward_fn = reward_fn or CLIPPromptReward()
 
-    def sample(self, prompt, config, exp_name, save_name="best_of_n.png"):
+    def sample(self, prompt, config, exp_name, save_name="best_of_n.png", save_to_disk=True):
         candidates = []
         t_start = time.time()
         total_forward_passes = 0
@@ -47,6 +47,8 @@ class BestOfNSampler:
                 exp_name=exp_name,
                 methods_override=self.base_methods,
                 save_name=f"candidate_{i}_{save_name}",
+                save_to_disk=save_to_disk,  # honor caller's choice — large-scale sweeps pass False
+                                             # so best_of_n doesn't dump n_candidates x N images to disk
             )
             score = clip_align_score(self.reward_fn, img, prompt)
             total_forward_passes += metrics.get("total_forward_passes", 0)

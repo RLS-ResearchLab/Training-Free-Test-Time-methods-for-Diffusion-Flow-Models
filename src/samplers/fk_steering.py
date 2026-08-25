@@ -20,7 +20,8 @@ class FKSteeringSampler:
         self.output_dir = output_dir
 
     @torch.no_grad()
-    def sample(self, prompt: str, config: dict, exp_name: str = "fk_run", save_name: str = "result.png"):
+    def sample(self, prompt: str, config: dict, exp_name: str = "fk_run", save_name: str = "result.png",
+               save_to_disk: bool = True):
         num_particles = config.get("num_particles", 4)
         resample_interval = config.get("resample_interval", 5)
         temperature = config.get("fk_temperature", 1.0)
@@ -82,7 +83,8 @@ class FKSteeringSampler:
             best_idx = int(torch.argmax(final_rewards).item())
             best_image = images[best_idx:best_idx + 1]
 
-        self._save_tensor_as_image(best_image, os.path.join(self.output_dir, exp_name, save_name))
+        if save_to_disk:
+            self._save_tensor_as_image(best_image, os.path.join(self.output_dir, exp_name, save_name))
 
         metrics = {
             "total_forward_passes": forward_pass_count,
