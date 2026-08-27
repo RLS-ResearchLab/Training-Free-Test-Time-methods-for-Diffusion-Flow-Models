@@ -1,0 +1,184 @@
+{
+  "ablation_experiments": [
+    {
+      "experiment": "AutoGuidance_LatentScale",
+      "method": "cfg",
+      "variant": "",
+      "state": "without",
+      "forward_passes": 60,
+      "time_sec": 59.94,
+      "peak_memory_mb": 11097.8,
+      "clip_score": 0.2907,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_LatentScale",
+      "method": "cfg",
+      "variant": "",
+      "state": "with",
+      "forward_passes": 90,
+      "time_sec": 50.412,
+      "peak_memory_mb": 11278.2,
+      "clip_score": 0.2949,
+      "dino_lpips_vs_without": 4.3245
+    },
+    {
+      "experiment": "AutoGuidance_LatentScale",
+      "method": "auto_guidance",
+      "variant": "latent_scale",
+      "state": "without",
+      "forward_passes": 60,
+      "time_sec": 37.673,
+      "peak_memory_mb": 11291.3,
+      "clip_score": 0.294,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_LatentScale",
+      "method": "auto_guidance",
+      "variant": "latent_scale",
+      "state": "with",
+      "forward_passes": 90,
+      "time_sec": 50.18,
+      "peak_memory_mb": 11304.2,
+      "clip_score": 0.2949,
+      "dino_lpips_vs_without": 1.6864
+    },
+    {
+      "experiment": "AutoGuidance_FewerTimesteps",
+      "method": "cfg",
+      "variant": "",
+      "state": "without",
+      "forward_passes": 30,
+      "time_sec": 25.354,
+      "peak_memory_mb": 11317.1,
+      "clip_score": 0.2998,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_FewerTimesteps",
+      "method": "cfg",
+      "variant": "",
+      "state": "with",
+      "forward_passes": 45,
+      "time_sec": 31.856,
+      "peak_memory_mb": 11330.0,
+      "clip_score": 0.3025,
+      "dino_lpips_vs_without": 4.5965
+    },
+    {
+      "experiment": "AutoGuidance_FewerTimesteps",
+      "method": "auto_guidance",
+      "variant": "latent_scale",
+      "state": "without",
+      "forward_passes": 30,
+      "time_sec": 25.313,
+      "peak_memory_mb": 11342.8,
+      "clip_score": 0.3034,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_FewerTimesteps",
+      "method": "auto_guidance",
+      "variant": "latent_scale",
+      "state": "with",
+      "forward_passes": 45,
+      "time_sec": 31.739,
+      "peak_memory_mb": 11355.7,
+      "clip_score": 0.3025,
+      "dino_lpips_vs_without": 1.9128
+    },
+    {
+      "experiment": "AutoGuidance_WeightNoise",
+      "method": "cfg",
+      "variant": "",
+      "state": "without",
+      "forward_passes": 60,
+      "time_sec": 38.298,
+      "peak_memory_mb": 11368.6,
+      "clip_score": 0.3034,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_WeightNoise",
+      "method": "cfg",
+      "variant": "",
+      "state": "with",
+      "forward_passes": 90,
+      "time_sec": 51.235,
+      "peak_memory_mb": 11381.5,
+      "clip_score": 0.2938,
+      "dino_lpips_vs_without": 4.3521
+    },
+    {
+      "experiment": "AutoGuidance_WeightNoise",
+      "method": "auto_guidance",
+      "variant": "weight_noise",
+      "state": "without",
+      "forward_passes": 60,
+      "time_sec": 38.219,
+      "peak_memory_mb": 11394.3,
+      "clip_score": 0.294,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "AutoGuidance_WeightNoise",
+      "method": "auto_guidance",
+      "variant": "weight_noise",
+      "state": "with",
+      "forward_passes": 90,
+      "time_sec": 51.101,
+      "peak_memory_mb": 11407.2,
+      "clip_score": 0.293,
+      "dino_lpips_vs_without": 0.0495
+    },
+    {
+      "experiment": "Baseline_CFG",
+      "method": "cfg",
+      "variant": "",
+      "state": "without",
+      "forward_passes": 30,
+      "time_sec": 25.181,
+      "peak_memory_mb": 11420.1,
+      "clip_score": 0.3032,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "Baseline_CFG",
+      "method": "cfg",
+      "variant": "",
+      "state": "with",
+      "forward_passes": 60,
+      "time_sec": 38.182,
+      "peak_memory_mb": 11433.0,
+      "clip_score": 0.294,
+      "dino_lpips_vs_without": 4.3656
+    },
+    {
+      "experiment": "FK_Steering",
+      "method": "fk_steering",
+      "variant": "",
+      "state": "without",
+      "forward_passes": 60,
+      "time_sec": 38.192,
+      "peak_memory_mb": 11445.8,
+      "clip_score": 0.294,
+      "dino_lpips_vs_without": null
+    },
+    {
+      "experiment": "FK_Steering",
+      "method": "fk_steering",
+      "variant": "",
+      "state": "with",
+      "forward_passes": 120,
+      "time_sec": 86.415,
+      "peak_memory_mb": 11458.7,
+      "clip_score": 0.3002,
+      "dino_lpips_vs_without": 4.4297
+    }
+  ],
+  "multi_prompt": {},
+  "notes": {
+    "fid": "Aucun score FID n'est present : scripts/eval_fid_clip.py exige --real_dir (un dossier local d'images reelles type ImageNet-val) qui n'est jamais telecharge automatiquement (licence requise + pas d'acces reseau a un hebergeur d'images dans cet environnement). dino_lpips_vs_without sert de proxy de similarite en attendant."
+  }
+}

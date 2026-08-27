@@ -20,7 +20,7 @@ class SD35Wrapper(nn.Module):
             torch_dtype=self.dtype
         )
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.pipe.to(device)
+        self.pipe.enable_model_cpu_offload()
 
         
         self.transformer = self.pipe.transformer

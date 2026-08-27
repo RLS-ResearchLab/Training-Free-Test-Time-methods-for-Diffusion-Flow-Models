@@ -279,13 +279,27 @@ def make_figure(results, real_feats, out_path, n_grid, img_cols=8):
     ncols = max(img_cols, 3)
     total_rows = total_img_rows + 1  # +1 for the bottom metrics row
 
-    fig = plt.figure(figsize=(3.0 * ncols, 2.6 * max(total_img_rows, 1) + 4.5))
+    # Compact row-header labels (drop the redundant "CFG + " prefix — every
+    # auto_guidance_* row already implies CFG is active, no need to repeat
+    # it 3 times down the left margin) — keeps rotated ylabel text short
+    # enough to fit within one row's height instead of bleeding into
+    # neighboring rows, which is what caused the overlapping label block.
+    _ROW_LABELS = {
+        "cfg": "CFG",
+        "auto_guidance_latent_scale": "AutoGuidance\n(latent scale)",
+        "auto_guidance_weight_noise": "AutoGuidance\n(weight noise)",
+        "auto_guidance_fewer_timesteps": "AutoGuidance\n(fewer timesteps)",
+        "fk_steering": "FK Steering",
+        "best_of_n": "Best-of-N",
+    }
+
+    fig = plt.figure(figsize=(3.0 * ncols, 3.0 * max(total_img_rows, 1) + 4.5))
     gs = fig.add_gridspec(total_rows, ncols, height_ratios=[1] * total_img_rows + [1.4])
 
     # --- image grid: every technique gets img_rows_per_tech rows, wrapping at img_cols ---
     row_cursor = 0
     for r in results:
-        label = TECHNIQUE_LABELS.get(r["technique"], r["technique"])
+        label = _ROW_LABELS.get(r["technique"], TECHNIQUE_LABELS.get(r["technique"], r["technique"]))
         images = r["grid_images"]
         for ridx in range(img_rows_per_tech):
             for cidx in range(img_cols):
@@ -298,49 +312,82 @@ def make_figure(results, real_feats, out_path, n_grid, img_cols=8):
                 for spine in ax.spines.values():
                     spine.set_visible(False)
                 if cidx == 0 and ridx == 0:
-                    ax.set_ylabel(label, fontsize=12, fontweight="bold")
+                    # horizontal (not rotated) label, placed left of the axes
+                    # via annotate + axes coords, so its height doesn't
+                    # depend on how tall this one row is — this is what
+                    # actually fixes the overlap, not just shorter text
+                    ax.annotate(
+                        label, xy=(0, 0.5), xycoords="axes fraction",
+                        xytext=(-10, 0), textcoords="offset points",
+                        ha="right", va="center", fontsize=10, fontweight="bold",
+                    )
             row_cursor += 1
 
     # --- bottom row: CLIP bar / FID bar / quality-vs-compute scatter ---
-    # append n= to each label when techniques don't all share the same N,
-    # so the figure doesn't silently imply a uniform sample count
+    # single-line compact labels for x-axis ticks (drop redundant "CFG + "
+    # prefix, same reasoning as the row headers above) — the earlier full
+    # TECHNIQUE_LABELS strings were too wide for 6 bars side by side and
+    # overlapped both each other and the neighboring subplot's title.
+    _BAR_LABELS = {
+        "cfg": "CFG",
+        "auto_guidance_latent_scale": "AutoG.\n(latent)",
+        "auto_guidance_weight_noise": "AutoG.\n(weight)",
+        "auto_guidance_fewer_timesteps": "AutoG.\n(fewer ts)",
+        "fk_steering": "FK\nSteering",
+        "best_of_n": "Best-\nof-N",
+    }
     n_values = {r["n"] for r in results}
-    if len(n_values) > 1:
-        labels = [f'{TECHNIQUE_LABELS.get(r["technique"], r["technique"])} (N={r["n"]})' for r in results]
-    else:
-        labels = [TECHNIQUE_LABELS.get(r["technique"], r["technique"]) for r in results]
+    short_labels = [_BAR_LABELS.get(r["technique"], TECHNIQUE_LABELS.get(r["technique"], r["technique"]))
+                    for r in results]
     clip_means = [r["clip_mean"] for r in results]
     clip_sems = [r["clip_std"] / max(1, r["n"]) ** 0.5 for r in results]
 
-    third = max(1, ncols // 3)
+    # extra horizontal gap between the 3 bottom panels so titles/ticks from
+    # neighboring subplots can't bleed into each other
+    third = max(1, (ncols - 1) // 3)
+    gap = 1 if ncols > third * 3 + 2 else 0
     ax_clip = fig.add_subplot(gs[total_img_rows, 0:third])
-    ax_clip.bar(labels, clip_means, yerr=clip_sems, capsize=4, color="#4C72B0")
-    ax_clip.set_title(f"Mean CLIP score (N varies per technique — see labels)")
-    ax_clip.tick_params(axis="x", rotation=20)
+    ax_clip.bar(short_labels, clip_means, yerr=clip_sems, capsize=4, color="#4C72B0")
+    ax_clip.set_title("Mean CLIP score" + (" (N varies*)" if len(n_values) > 1 else f" (N={results[0]['n']})"),
+                       fontsize=10)
+    ax_clip.tick_params(axis="x", rotation=0, labelsize=7)
+    for lbl in ax_clip.get_xticklabels():
+        lbl.set_ha("center")
 
-    ax_fid = fig.add_subplot(gs[total_img_rows, third:2 * third])
-    ax_fid.bar(labels, fids, color="#DD8452")
-    ax_fid.set_title("FID vs. real images (lower is better)")
-    ax_fid.tick_params(axis="x", rotation=20)
+    ax_fid = fig.add_subplot(gs[total_img_rows, third + gap:2 * third + gap])
+    ax_fid.bar(short_labels, fids, color="#DD8452")
+    ax_fid.set_title("FID vs. real images (lower is better)", fontsize=10)
+    ax_fid.tick_params(axis="x", rotation=0, labelsize=7)
+    for lbl in ax_fid.get_xticklabels():
+        lbl.set_ha("center")
 
-    ax_qc = fig.add_subplot(gs[total_img_rows, 2 * third:ncols])
+    ax_qc = fig.add_subplot(gs[total_img_rows, 2 * third + 2 * gap:ncols])
     for r in results:
         ax_qc.scatter(r["forward_passes_mean"], r["clip_mean"], s=90)
         ax_qc.annotate(
-            TECHNIQUE_LABELS.get(r["technique"], r["technique"]),
+            _BAR_LABELS.get(r["technique"], TECHNIQUE_LABELS.get(r["technique"], r["technique"])).replace("\n", " "),
             (r["forward_passes_mean"], r["clip_mean"]),
-            textcoords="offset points", xytext=(6, 6), fontsize=9,
+            textcoords="offset points", xytext=(6, 6), fontsize=7,
         )
     ax_qc.set_xlabel("Avg. forward passes / sample (compute)")
     ax_qc.set_ylabel("Mean CLIP score (quality)")
     ax_qc.set_title("Quality vs. compute")
 
-    n_summary = ", ".join(f"{r['technique']}={r['n']}" for r in results) if len(n_values) > 1 else str(results[0]['n'])
+    # *footnote with the full per-technique N breakdown, kept OUT of the
+    # suptitle — a long single-line title with every technique's N was
+    # overlapping the image grid above it in earlier runs. This goes below
+    # everything instead, in fig.text, which doesn't compete for the same
+    # vertical space as the grid/suptitle.
+    if len(n_values) > 1:
+        n_footnote = "  |  ".join(f"{TECHNIQUE_LABELS.get(r['technique'], r['technique'])}: N={r['n']}"
+                                   for r in results)
+        fig.text(0.5, 0.005, f"* {n_footnote}", ha="center", fontsize=7, style="italic")
+
     fig.suptitle(
-        f"Training-free / test-time methods — large-scale eval (N: {n_summary})",
+        "Training-free / test-time methods — large-scale eval",
         fontsize=14, fontweight="bold",
     )
-    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    fig.tight_layout(rect=[0.08, 0.02, 1, 0.96])
 
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=180)

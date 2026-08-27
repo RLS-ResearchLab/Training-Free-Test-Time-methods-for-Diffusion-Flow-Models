@@ -4,7 +4,9 @@ transformers
 diffusers
 accelerate
 huggingface_hub
+datasets
 lpips
 open_clip_torch
 PyYAML
 tabulate
+

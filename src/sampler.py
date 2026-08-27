@@ -6,6 +6,80 @@ from PIL import Image
 from src.utils import ComputeTracker
 
 
+def find_max_batch_size(sampler, prompt_template, config, ceiling=256, start=1,
+                         methods_override=None):
+    """
+    Auto-detects the largest batch_size that fits in currently-free GPU
+    memory by doubling until OOM, then backing off one step for safety
+    margin (fragmentation, other processes on a shared GPU can still eat
+    into what was measured as "free" a moment ago).
+
+    methods_override: IMPORTANT — probe with the most expensive method
+    combination you intend to actually run at this batch_size. A batch_size
+    that's safe for bare "cfg" is NOT necessarily safe for "auto_guidance"
+    (extra forward pass per step) or specifically the weight_noise variant
+    (temporarily clones weight tensors on top of that). Defaults to
+    ["cfg", "auto_guidance"] with auto_guidance_variant="weight_noise"
+    forced into a copy of `config` for the probe, since that's the priciest
+    combination this repo runs — probing with anything cheaper risks
+    exactly the false-safe result that caused an OOM mid-run before.
+
+    ceiling=256: if you ever run on hardware where 256 genuinely fits
+    (e.g. a dedicated 80GB+ GPU, low resolution, few inference steps),
+    this will find it. On a shared ~24GB GPU at 512-1024px it will not —
+    that's expected, the function reports the real number, it doesn't
+    force one.
+    """
+    if not torch.cuda.is_available():
+        print("[find_max_batch_size] No CUDA device — defaulting to batch_size=1")
+        return 1
+
+    if methods_override is None:
+        methods_override = ["cfg", "auto_guidance"]
+    probe_config = dict(config)
+    if "auto_guidance" in methods_override:
+        probe_config["auto_guidance_variant"] = "weight_noise"  # priciest variant
+
+    device = torch.cuda.current_device()
+    last_good = None
+    bs = start
+    while bs <= ceiling:
+        try:
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats(device)
+            test_prompts = [prompt_template] * bs
+            sampler.sample(
+                prompt=test_prompts, config=probe_config, exp_name="_batch_probe",
+                save_name="probe.png", save_to_disk=False,
+                methods_override=methods_override,
+            )
+            peak_gb = torch.cuda.max_memory_allocated(device) / 1e9
+            free_gb, total_gb = [x / 1e9 for x in torch.cuda.mem_get_info(device)]
+            print(f"[find_max_batch_size] batch_size={bs} OK "
+                  f"(peak={peak_gb:.2f} GiB, free={free_gb:.2f}/{total_gb:.2f} GiB)")
+            last_good = bs
+            bs *= 2
+        except torch.cuda.OutOfMemoryError:
+            torch.cuda.empty_cache()
+            print(f"[find_max_batch_size] batch_size={bs} OOM — stopping search")
+            break
+
+    if last_good is None:
+        print("[find_max_batch_size] Even batch_size=1 OOM'd — GPU is too full "
+              "right now (check nvidia-smi for competing processes) or "
+              "resolution/steps are too high for available VRAM.")
+        return 1
+
+    # back off one notch from the largest that worked, for headroom against
+    # fragmentation and any other process's memory growing after this probe
+    safe_bs = max(1, last_good // 2) if last_good == bs // 2 else last_good
+    # (last_good is already the biggest that worked since we broke on OOM
+    # at the next size up; still take one more step back for margin)
+    safe_bs = max(1, last_good // 2) if last_good > start else last_good
+    print(f"[find_max_batch_size] Largest that fit: {last_good} — using {safe_bs} for headroom")
+    return safe_bs
+
+
 class ModularSampler:
     def __init__(self, model_wrapper, output_dir="samples"):
         self.model = model_wrapper

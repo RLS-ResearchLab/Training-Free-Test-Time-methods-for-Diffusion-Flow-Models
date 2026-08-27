@@ -95,7 +95,7 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--num_inference_steps", type=int, default=30)
     ap.add_argument("--cfg_scale", type=float, default=7.5)
-    ap.add_argument("--out", default="results/multi_prompt_report.json")
+    ap.add_argument("--out", default="results.json")
     args = ap.parse_args()
 
     model_wrapper = SD35Wrapper(model_id=args.model_id)
@@ -126,23 +126,28 @@ def main():
         })
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    existing = {}
+    if Path(args.out).exists():
+        existing = json.loads(Path(args.out).read_text())
+    existing.setdefault("ablation_experiments", [])
+    existing.setdefault("multi_prompt", {})
+    existing["multi_prompt"][method_key] = all_results
+    existing.setdefault("notes", {
+        "fid": (
+            "Aucun score FID n'est present : scripts/eval_fid_clip.py exige --real_dir "
+            "(un dossier local d'images reelles type ImageNet-val) qui n'est jamais telecharge "
+            "automatiquement (licence requise + pas d'acces reseau a un hebergeur d'images dans "
+            "cet environnement). dino_lpips_vs_without sert de proxy de similarite en attendant."
+        ),
+    })
     with open(args.out, "w") as f:
-        json.dump(all_results, f, indent=2)
+        json.dump(existing, f, indent=2, ensure_ascii=False)
 
     print("\n=== SUMMARY ===")
     for r in all_results:
         print(f"[{r['prompt_idx']}] mean_clip={r['mean_clip_score']:.4f}  best_clip={r['best_clip_score']:.4f}  {r['prompt'][:60]}...")
 
-    # Sauvegarde automatique dans results_table.md
-    md_file = Path("results_table.md")
-    with open(md_file, "a") as f:
-        f.write(f"\n\n## Multi-Prompt Results ({method_key})\n\n")
-        f.write("| Prompt ID | Mean CLIP | Best CLIP | Prompt |\n")
-        f.write("|---|---|---|---|\n")
-        for r in all_results:
-            f.write(f"| {r['prompt_idx']} | {r['mean_clip_score']:.4f} | {r['best_clip_score']:.4f} | {r['prompt'][:60]}... |\n")
-
-    print(f"\n[OK] Résultats enregistrés dans {md_file} et {args.out}")
+    print(f"\n[OK] Résultats multi-prompt ({method_key}) fusionnés dans {args.out}")
 
 
 if __name__ == "__main__":
