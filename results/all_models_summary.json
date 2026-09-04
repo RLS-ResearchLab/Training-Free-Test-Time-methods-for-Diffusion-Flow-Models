@@ -1,0 +1,176 @@
+{
+  "stable-diffusion-3-5-medium": {
+    "model_id": "stabilityai/stable-diffusion-3.5-medium",
+    "family": "sd3",
+    "model_size_b": 2.24317152,
+    "cfg_interval": [
+      0.1,
+      0.9
+    ],
+    "time_shift": "resolution",
+    "by_technique": {
+      "cfg": {
+        "n": 100,
+        "clip_mean": 0.3149069368839264,
+        "clip_std": 0.01860491529913444,
+        "fid": 217.37617020351018,
+        "gflops_mean": 607476.980219904,
+        "forward_passes_mean": 54.0,
+        "time_mean": 15.550233664512634
+      },
+      "auto_guidance_latent_scale": {
+        "n": 100,
+        "clip_mean": 0.3115127243101597,
+        "clip_std": 0.02242090180959277,
+        "fid": 216.98505002943952,
+        "gflops_mean": 944964.191453184,
+        "forward_passes_mean": 84.0,
+        "time_mean": 21.100115404129028
+      },
+      "auto_guidance_weight_noise": {
+        "n": 100,
+        "clip_mean": 0.31515510320663453,
+        "clip_std": 0.01937204470259198,
+        "fid": 218.604766467515,
+        "gflops_mean": 944964.191453184,
+        "forward_passes_mean": 84.0,
+        "time_mean": 21.0788001871109
+      },
+      "auto_guidance_fewer_timesteps": {
+        "n": 100,
+        "clip_mean": 0.30852787509560586,
+        "clip_std": 0.024333703811411863,
+        "fid": 223.82955010375218,
+        "gflops_mean": 944964.191453184,
+        "forward_passes_mean": 84.0,
+        "time_mean": 21.093852167129516
+      },
+      "fk_steering": {
+        "n": 100,
+        "clip_mean": 0.328647038936615,
+        "clip_std": 0.017389604695729435,
+        "fid": 223.44778651256908,
+        "gflops_mean": 2699897.68986624,
+        "forward_passes_mean": 240.0,
+        "time_mean": 69.5317572236061
+      },
+      "best_of_n": {
+        "n": 100,
+        "clip_mean": 0.3291488653421402,
+        "clip_std": 0.0181070176581436,
+        "fid": 224.40343395196865,
+        "gflops_mean": 3037384.90109952,
+        "forward_passes_mean": 270.0,
+        "time_mean": 103.22322111368179
+      }
+    }
+  },
+  "FLUX-1-schnell": {
+    "model_id": "black-forest-labs/FLUX.1-schnell",
+    "family": "flux",
+    "model_size_b": 11.89117856,
+    "cfg_interval": [
+      0.0,
+      1.0
+    ],
+    "time_shift": null,
+    "by_technique": {
+      "cfg": {
+        "n": 4,
+        "clip_mean": 0.290162555873394,
+        "clip_std": 0.009086945114396965,
+        "fid": 365.45946280608763,
+        "gflops_mean": 4463077.97827584,
+        "forward_passes_mean": 60.0,
+        "time_mean": 271.7229880094528
+      }
+    }
+  },
+  "stable-diffusion-3-5-large": {
+    "model_id": "stabilityai/stable-diffusion-3.5-large",
+    "family": "sd3",
+    "model_size_b": 8.05662752,
+    "cfg_interval": [
+      0.1,
+      0.9
+    ],
+    "time_shift": "resolution",
+    "by_technique": {
+      "cfg": {
+        "n": 100,
+        "clip_mean": 0.31408931672573087,
+        "clip_std": 0.02038744651060069,
+        "fid": 226.2705352771847,
+        "gflops_mean": 1680540.205012992,
+        "forward_passes_mean": 54.0,
+        "time_mean": 34.17139178991318
+      },
+      "auto_guidance_latent_scale": {
+        "n": 100,
+        "clip_mean": 0.3101656399667263,
+        "clip_std": 0.021589830072318312,
+        "fid": 226.65049115809467,
+        "gflops_mean": 2614173.652242432,
+        "forward_passes_mean": 84.0,
+        "time_mean": 47.58534786224365
+      },
+      "auto_guidance_weight_noise": {
+        "n": 100,
+        "clip_mean": 0.3155208545923233,
+        "clip_std": 0.020181870922842085,
+        "fid": 225.26875504366552,
+        "gflops_mean": 2614173.652242432,
+        "forward_passes_mean": 84.0,
+        "time_mean": 47.57520679473877
+      },
+      "auto_guidance_fewer_timesteps": {
+        "n": 100,
+        "clip_mean": 0.307356845587492,
+        "clip_std": 0.0235486912802812,
+        "fid": 226.00093322572502,
+        "gflops_mean": 2614173.652242432,
+        "forward_passes_mean": 84.0,
+        "time_mean": 47.604097511768344
+      },
+      "fk_steering": {
+        "n": 100,
+        "clip_mean": 0.33086972147226335,
+        "clip_std": 0.018166471755596963,
+        "fid": 224.1524384479419,
+        "gflops_mean": 7469067.57783552,
+        "forward_passes_mean": 240.0,
+        "time_mean": 178.3879141688347
+      },
+      "best_of_n": {
+        "n": 100,
+        "clip_mean": 0.33123668283224106,
+        "clip_std": 0.01955299304725646,
+        "fid": 219.67176147767097,
+        "gflops_mean": 8402701.02506496,
+        "forward_passes_mean": 270.0,
+        "time_mean": 222.37965881824493
+      }
+    }
+  },
+  "FLUX-1-dev": {
+    "model_id": "black-forest-labs/FLUX.1-dev",
+    "family": "flux",
+    "model_size_b": 11.90140832,
+    "cfg_interval": [
+      0.0,
+      1.0
+    ],
+    "time_shift": null,
+    "by_technique": {
+      "cfg": {
+        "n": 10,
+        "clip_mean": 0.26997082978487014,
+        "clip_std": 0.022731458295944026,
+        "fid": 366.8090739830346,
+        "gflops_mean": 4463079.20510976,
+        "forward_passes_mean": 60.0,
+        "time_mean": 267.33054349422457
+      }
+    }
+  }
+}

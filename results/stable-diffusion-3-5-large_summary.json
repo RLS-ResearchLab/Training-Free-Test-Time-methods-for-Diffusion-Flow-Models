@@ -1,0 +1,66 @@
+{
+  "model_id": "stabilityai/stable-diffusion-3.5-large",
+  "family": "sd3",
+  "model_size_b": 8.05662752,
+  "cfg_interval": [
+    0.1,
+    0.9
+  ],
+  "time_shift": "resolution",
+  "by_technique": {
+    "cfg": {
+      "n": 100,
+      "clip_mean": 0.31408931672573087,
+      "clip_std": 0.02038744651060069,
+      "fid": 226.2705352771847,
+      "gflops_mean": 1680540.205012992,
+      "forward_passes_mean": 54.0,
+      "time_mean": 34.17139178991318
+    },
+    "auto_guidance_latent_scale": {
+      "n": 100,
+      "clip_mean": 0.3101656399667263,
+      "clip_std": 0.021589830072318312,
+      "fid": 226.65049115809467,
+      "gflops_mean": 2614173.652242432,
+      "forward_passes_mean": 84.0,
+      "time_mean": 47.58534786224365
+    },
+    "auto_guidance_weight_noise": {
+      "n": 100,
+      "clip_mean": 0.3155208545923233,
+      "clip_std": 0.020181870922842085,
+      "fid": 225.26875504366552,
+      "gflops_mean": 2614173.652242432,
+      "forward_passes_mean": 84.0,
+      "time_mean": 47.57520679473877
+    },
+    "auto_guidance_fewer_timesteps": {
+      "n": 100,
+      "clip_mean": 0.307356845587492,
+      "clip_std": 0.0235486912802812,
+      "fid": 226.00093322572502,
+      "gflops_mean": 2614173.652242432,
+      "forward_passes_mean": 84.0,
+      "time_mean": 47.604097511768344
+    },
+    "fk_steering": {
+      "n": 100,
+      "clip_mean": 0.33086972147226335,
+      "clip_std": 0.018166471755596963,
+      "fid": 224.1524384479419,
+      "gflops_mean": 7469067.57783552,
+      "forward_passes_mean": 240.0,
+      "time_mean": 178.3879141688347
+    },
+    "best_of_n": {
+      "n": 100,
+      "clip_mean": 0.33123668283224106,
+      "clip_std": 0.01955299304725646,
+      "fid": 219.67176147767097,
+      "gflops_mean": 8402701.02506496,
+      "forward_passes_mean": 270.0,
+      "time_mean": 222.37965881824493
+    }
+  }
+}

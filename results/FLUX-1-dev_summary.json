@@ -1,0 +1,21 @@
+{
+  "model_id": "black-forest-labs/FLUX.1-dev",
+  "family": "flux",
+  "model_size_b": 11.90140832,
+  "cfg_interval": [
+    0.0,
+    1.0
+  ],
+  "time_shift": null,
+  "by_technique": {
+    "cfg": {
+      "n": 10,
+      "clip_mean": 0.26997082978487014,
+      "clip_std": 0.022731458295944026,
+      "fid": 366.8090739830346,
+      "gflops_mean": 4463079.20510976,
+      "forward_passes_mean": 60.0,
+      "time_mean": 267.33054349422457
+    }
+  }
+}
