@@ -35,6 +35,7 @@ class BestOfNSampler:
         candidates = []
         t_start = time.time()
         total_forward_passes = 0
+        total_flops = 0.0
         base_seed = config.get("seed", 0)
 
         for i in range(self.n):
@@ -52,6 +53,7 @@ class BestOfNSampler:
             )
             score = clip_align_score(self.reward_fn, img, prompt)
             total_forward_passes += metrics.get("total_forward_passes", 0)
+            total_flops += metrics.get("total_flops", 0.0)
 
             candidates.append({
                 "candidate_idx": i,
@@ -65,6 +67,7 @@ class BestOfNSampler:
 
         aggregate_metrics = {
             "total_forward_passes": total_forward_passes,
+            "total_flops": total_flops,
             "time_sec": time.time() - t_start,
             "peak_memory_mb": max(c["metrics"].get("peak_memory_mb", 0) for c in candidates),
             "n": self.n,

@@ -16,7 +16,7 @@ import argparse
 import json
 from pathlib import Path
 
-from src.model import SD35Wrapper
+from src.model import load_model
 from src.sampler import ModularSampler
 from src.samplers.best_of_n import BestOfNSampler
 from src.rewards.clip_reward import CLIPPromptReward
@@ -98,7 +98,7 @@ def main():
     ap.add_argument("--out", default="results.json")
     args = ap.parse_args()
 
-    model_wrapper = SD35Wrapper(model_id=args.model_id)
+    model_wrapper = load_model(args.model_id)
     sampler, method_key = build_sampler(args.sampler, model_wrapper, args.k)
     reward_fn = CLIPPromptReward()
     base_config = {

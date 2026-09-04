@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from PIL import Image
 
 from src.utils import ComputeTracker
+from src.flops import FlopTracker
 
 
 class FKSteeringSampler:
@@ -18,6 +19,14 @@ class FKSteeringSampler:
         self.model = model_wrapper
         self.reward_fn = reward_fn  # callable(model_wrapper, latents, prompt) -> tensor [K]
         self.output_dir = output_dir
+        # Same FlopTracker pattern as ModularSampler (src/sampler.py) — wraps
+        # the model_wrapper (not the raw transformer) so it goes through
+        # predict(), which is where family-specific extra kwargs (Flux's
+        # img_ids/txt_ids/guidance) get added. Calling the transformer
+        # directly here was also missing entirely from "total_flops" in the
+        # returned metrics, which is why FK Steering/Best-of-N showed up as
+        # GFLOPs/sample=nan in the large-scale eval plots.
+        self._flop_tracker = FlopTracker(self.model)
 
     @torch.no_grad()
     def sample(self, prompt: str, config: dict, exp_name: str = "fk_run", save_name: str = "result.png",
@@ -30,6 +39,7 @@ class FKSteeringSampler:
         seed = config.get("seed", 42)
 
         forward_pass_count = 0
+        total_flops = 0.0
 
         with ComputeTracker() as tracker:
             # 1. Encode le prompt une seule fois, dupliqué sur la dimension batch (= particules)
@@ -48,19 +58,25 @@ class FKSteeringSampler:
             for step_idx, t in enumerate(self.model.scheduler.timesteps):
                 t_batch = t.repeat(num_particles) if t.dim() == 0 else t
 
-                noise_cond = self.model.transformer(
+                noise_cond = self.model.predict(
                     hidden_states=latents, timestep=t_batch,
                     encoder_hidden_states=cond_embeds, pooled_projections=cond_pooled,
-                    return_dict=False,
-                )[0]
+                )
                 forward_pass_count += num_particles
+                total_flops += self._flop_tracker.count(
+                    hidden_states=latents, timestep=t_batch,
+                    encoder_hidden_states=cond_embeds, pooled_projections=cond_pooled,
+                )
 
-                noise_uncond = self.model.transformer(
+                noise_uncond = self.model.predict(
                     hidden_states=latents, timestep=t_batch,
                     encoder_hidden_states=uncond_embeds, pooled_projections=uncond_pooled,
-                    return_dict=False,
-                )[0]
+                )
                 forward_pass_count += num_particles
+                total_flops += self._flop_tracker.count(
+                    hidden_states=latents, timestep=t_batch,
+                    encoder_hidden_states=uncond_embeds, pooled_projections=uncond_pooled,
+                )
 
                 guided_noise = noise_uncond + cfg_scale * (noise_cond - noise_uncond)
                 step_out = self.model.scheduler.step(guided_noise, t, latents, return_dict=True)
@@ -88,6 +104,7 @@ class FKSteeringSampler:
 
         metrics = {
             "total_forward_passes": forward_pass_count,
+            "total_flops": total_flops,
             "num_particles": num_particles,
             "resample_interval": resample_interval,
             "final_rewards": final_rewards.tolist(),

@@ -9,7 +9,7 @@ import json
 import yaml
 import torch
 
-from src.model import SD35Wrapper
+from src.model import load_model
 from src.sampler import ModularSampler
 from src.samplers.fk_steering import FKSteeringSampler
 from src.rewards.clip_reward import CLIPPromptReward
@@ -39,7 +39,7 @@ def run_all_experiments():
     for p in config_paths:
         print(f"  - {p}")
 
-    model_wrapper = SD35Wrapper(model_id="stabilityai/stable-diffusion-3.5-medium")
+    model_wrapper = load_model("stabilityai/stable-diffusion-3.5-medium")
     modular_sampler = ModularSampler(model_wrapper)
     reward_fn = CLIPPromptReward()
     fk_sampler = FKSteeringSampler(model_wrapper, reward_fn)

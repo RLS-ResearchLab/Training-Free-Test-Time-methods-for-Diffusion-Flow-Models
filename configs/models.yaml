@@ -1,0 +1,20 @@
+# Model sweep for scripts/eval_large_scale.py --models_config configs/models.yaml
+#
+# Two axes on purpose, evaluated with the same techniques/prompts/N so the
+# comparison is apples-to-apples:
+#   1. size, within one family (SD3.5 medium -> large): does a bigger model
+#      in the SAME family reduce the training-free/test-time methods' gains,
+#      or do the methods help proportionally as much?
+#   2. family, at roughly comparable scale (SD3.5-large ~8B vs Flux-dev
+#      ~12B): does the taxonomy (CFG / auto-guidance / FK steering / best-of-N)
+#      transfer across architectures, or is any of it SD3-specific?
+#
+# Flux entries use FluxWrapper (src/model.py) which is untested against real
+# weights — run schnell first (cheap, 1-4 steps, guidance-distilled so CFG/
+# auto_guidance techniques don't apply to it directly) as a smoke test before
+# trusting the dev numbers.
+models:
+  - model_id: stabilityai/stable-diffusion-3.5-medium   # ~2.5B, baseline
+  - model_id: stabilityai/stable-diffusion-3.5-large     # ~8B, same family, size axis
+  - model_id: black-forest-labs/FLUX.1-schnell           # ~12B, family axis, distilled
+  - model_id: black-forest-labs/FLUX.1-dev               # ~12B, family axis, full CFG

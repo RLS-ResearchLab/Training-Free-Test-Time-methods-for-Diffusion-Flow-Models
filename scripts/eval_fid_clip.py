@@ -37,7 +37,7 @@ from torchvision import transforms as T
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from src.model import SD35Wrapper
+from src.model import load_model
 from src.sampler import ModularSampler
 from src.rewards.clip_reward import CLIPPromptReward
 from src.utils import clip_align_score
@@ -158,7 +158,7 @@ def main():
     real_images = sample_real_images(args.real_dir, args.n, seed=args.seed)
 
     print(f"[2/4] Generating {args.n} images with sampler='{args.sampler}'")
-    model_wrapper = SD35Wrapper(model_id=args.model_id)
+    model_wrapper = load_model(args.model_id)
     prompts = load_prompts(args.prompts_file, args.n, seed=args.seed)
     base_config = {
         "seed": args.seed,
